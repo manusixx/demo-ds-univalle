@@ -116,8 +116,8 @@ checkstyle {
 
 sonar {
 	properties {
-		property 'sonar.projectKey', 'TU-USUARIO_demo-ds-univalle'
-		property 'sonar.organization', 'TU-USUARIO'
+		property 'sonar.projectKey', 'manusixx_demo-ds-univalle'
+		property 'sonar.organization', 'manusixx'
 		property 'sonar.host.url', 'https://sonarcloud.io'
 		property 'sonar.coverage.jacoco.xmlReportPaths',
 				'build/reports/jacoco/test/jacocoTestReport.xml'

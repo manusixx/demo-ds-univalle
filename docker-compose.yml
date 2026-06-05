@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: matricula_postgres
+    environment:
+      POSTGRES_DB: matricula_db
+      POSTGRES_USER: matricula_user
+      POSTGRES_PASSWORD: matricula_pass
+    ports:
+      - "3050:5432"
+    volumes:
+      - matricula_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matricula_user -d matricula_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  matricula_data:

@@ -1,7 +1,7 @@
 name: CD — Despliegue Continuo
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 

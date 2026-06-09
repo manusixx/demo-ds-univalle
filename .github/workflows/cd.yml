@@ -1,4 +1,4 @@
-name: CD — Despliegue Continuo
+name: CD — Despliegue Continuo en EC2
 
 on:
   push:

@@ -1,6 +1,7 @@
 package co.edu.univalle.demo.integration;
 
 import co.edu.univalle.demo.model.ProfesorModel;
+import co.edu.univalle.demo.repository.CursoRepository;
 import co.edu.univalle.demo.repository.ProfesorRepository;
 
 // @SpringBootTest levanta el servidor HTTP completo en un puerto aleatorio
@@ -35,6 +36,12 @@ class ProfesorIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private ProfesorRepository profesorRepository;
 
+    // CursoRepository necesario para limpiar cursos antes de profesores
+    // ON DELETE RESTRICT en la FK fk_curso_profesor impide eliminar un profesor
+    // que tiene cursos asignados — debemos eliminar cursos primero
+    @Autowired
+    private CursoRepository cursoRepository;
+
     // @Value inyecta el puerto aleatorio que @SpringBootTest asignó al servidor
     // No podemos hardcode 8085 porque en tests el puerto es aleatorio
     @Value("${local.server.port}")
@@ -46,13 +53,13 @@ class ProfesorIntegrationTest extends BaseIntegrationTest {
         return "http://localhost:" + port + "/demo-ds-univalle/api/v1/profesores";
     }
 
-    // Paso 1: @BeforeEach — limpiar la BD
+    // Paso 1: @BeforeEach — limpiar la BD en orden correcto
     // Se ejecuta ANTES de cada test individual
-    // Elimina todos los registros de la tabla profesor
-    // garantiza que cada test parte de una BD vacía y limpia
-    // sin esto, datos creados en un test podrían afectar al siguiente
+    // Orden crítico: primero cursos (tiene FK hacia profesor con ON DELETE RESTRICT)
+    // luego profesores — si invertimos el orden falla con ConstraintViolationException
     @BeforeEach
     void limpiarBaseDeDatos() {
+        cursoRepository.deleteAll();
         profesorRepository.deleteAll();
     }
 
@@ -81,7 +88,7 @@ class ProfesorIntegrationTest extends BaseIntegrationTest {
                 baseUrl(), profesor, ProfesorModel.class);
 
         // Paso 4: verificamos el código HTTP y el cuerpo de la respuesta
-        // debe retornar 201 Created con el profesor guardado y su ID asignado
+        // debe retornar 201 Created con el profesor guardado y su id asignado
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertNotNull(response.getBody().getId());
@@ -127,7 +134,7 @@ class ProfesorIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("GET /api/v1/profesores/{id} - retorna profesor con HTTP 200")
     void whenGetProfesorById_withExistingId_thenReturnProfesor() {
-        // Paso 2: guardamos y capturamos el profesor con su ID asignado por la BD
+        // Paso 2: guardamos y capturamos el profesor con su id asignado por la BD
         ProfesorModel saved = profesorRepository.save(buildProfesor());
 
         // Paso 3: ejecutamos GET con el id real asignado por PostgreSQL
@@ -178,7 +185,7 @@ class ProfesorIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("DELETE /api/v1/profesores/{id} - elimina profesor y retorna HTTP 204")
     void whenDeleteProfesor_withExistingId_thenReturnNoContent() {
-        // Paso 2: guardamos el profesor para tener un ID válido que eliminar
+        // Paso 2: guardamos el profesor para tener un id válido que eliminar
         ProfesorModel saved = profesorRepository.save(buildProfesor());
 
         // Paso 3: ejecutamos DELETE con el id real
@@ -204,7 +211,7 @@ class ProfesorIntegrationTest extends BaseIntegrationTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
-    // Buscar por nombre
+    // ── Buscar por nombre ─────────────────────────────────────────────────────
 
     @Test
     @DisplayName("GET /api/v1/profesores/buscar - retorna profesores que coinciden")

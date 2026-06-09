@@ -57,9 +57,11 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Preparar llave SSH
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > /tmp/ssh_key
-          chmod 600 /tmp/ssh_key
+            echo "$SSH_KEY" | base64 -d > /tmp/ssh_key
+            chmod 600 /tmp/ssh_key
 
       - name: Desplegar en EC2
         uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acdf2aa1f6df0f6 # v1.0.3
